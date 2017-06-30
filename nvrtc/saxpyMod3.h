@@ -7,5 +7,5 @@
 
 //example from the user guide: http://docs.nvidia.com/cuda/nvrtc/index.html#example-saxpy
 //visual studio project settings set for CUDA 8.0 libs
-//sample toEval: "node.x + node.y;"
-void runSaxpyMod2(std::string toEval);
+
+void runSaxpyMod3(std::string toEval);

@@ -23,12 +23,14 @@
     <ClCompile Include="nvrtc\saxpy.cpp" />
     <ClCompile Include="nvrtc\saxpyMod1.cpp" />
     <ClCompile Include="nvrtc\saxpyMod2.cpp" />
+    <ClCompile Include="nvrtc\saxpyMod3.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Node.h" />
     <ClInclude Include="nvrtc\saxpy.h" />
     <ClInclude Include="nvrtc\saxpyMod1.h" />
     <ClInclude Include="nvrtc\saxpyMod2.h" />
+    <ClInclude Include="nvrtc\saxpyMod3.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{240D0129-DB96-439C-ACAD-578C0F9CA714}</ProjectGuid>

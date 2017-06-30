@@ -1,9 +1,9 @@
-#include <saxpyMod2.h>
+#include <saxpyMod3.h>
 
 int main()
 {
 
-	runSaxpyMod2("node.x + node.y;");
+	runSaxpyMod3("node.westNode->x;");
 
 	system("pause");
 	return 0;

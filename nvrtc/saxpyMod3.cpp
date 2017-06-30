@@ -1,6 +1,6 @@
 //example from the user guide: http://docs.nvidia.com/cuda/nvrtc/index.html#example-saxpy
 //visual studio project settings set for CUDA 8.0 libs
-#include <saxpyMod2.h>
+#include <saxpyMod3.h>
 #include <Node.h>
 
 
@@ -38,7 +38,7 @@
 
 
 
-void runSaxpyMod2(std::string toEval)
+void runSaxpyMod3(std::string toEval)
 {
 
 	std::string kernelUDF = "struct Node{int x, y, u;int r; Node* westNode;}; \n\
@@ -50,7 +50,7 @@ void runSaxpyMod2(std::string toEval)
 						 if (tid < n) { \n\
 						 dnodes[tid].r = ";
 
-
+	//kernel that fixes the pointers of the nodes on the device
 	std::string kernelSetPtrs = "struct Node{int x, y, u;int r; Node* westNode;}; \n\
 						extern \"C\" __global__ \n\
 						void setNodePtrs(Node* dnodes, size_t n) \n\

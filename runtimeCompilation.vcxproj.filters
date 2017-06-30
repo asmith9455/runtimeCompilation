@@ -5,11 +5,13 @@
     <ClCompile Include="nvrtc\saxpy.cpp" />
     <ClCompile Include="nvrtc\saxpyMod1.cpp" />
     <ClCompile Include="nvrtc\saxpyMod2.cpp" />
+    <ClCompile Include="nvrtc\saxpyMod3.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="nvrtc\saxpy.h" />
     <ClInclude Include="nvrtc\saxpyMod1.h" />
     <ClInclude Include="nvrtc\saxpyMod2.h" />
     <ClInclude Include="Node.h" />
+    <ClInclude Include="nvrtc\saxpyMod3.h" />
   </ItemGroup>
 </Project>
