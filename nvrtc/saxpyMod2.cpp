@@ -1,23 +1,15 @@
 //example from the user guide: http://docs.nvidia.com/cuda/nvrtc/index.html#example-saxpy
 //visual studio project settings set for CUDA 8.0 libs
 #include <saxpyMod2.h>
+#include <Node.h>
 
-struct X
-{
-	int A;
-	X(int a)
-	{
-		A = a;
-	}
-	int opx(X& x)
-	{
-		return A + x.A;
-	}
 
-};
 
-#define NUM_THREADS 128
-#define NUM_BLOCKS 32
+#define NUM_THREADS 1
+#define NUM_BLOCKS 1
+
+
+
 #define NVRTC_SAFE_CALL(x) \
  do { \
  nvrtcResult result = x; \
@@ -27,6 +19,10 @@ struct X
  exit(1); \
  } \
  } while(0)
+
+
+
+
 #define CUDA_SAFE_CALL(x) \
  do { \
  CUresult result = x; \
@@ -39,55 +35,85 @@ struct X
  } \
  } while(0)
 
+
+
+
 void runSaxpyMod2(std::string toEval)
 {
-	
-	const char *saxpy1 = " \n\
-extern \"C\" __global__ \n\
-void saxpy(float a, float *x, float *y, float *out, size_t n) \n\
-{ \n\
- size_t tid = blockIdx.x * blockDim.x + threadIdx.x; \n\
- if (tid < n) { \n\
- out[tid] = a * x[tid] + y[tid]; \n\
- } \n\
-} \n";
-	std::string saxpy1Str(saxpy1);
 
-	std::string tmp1 = " \n\
-extern \"C\" __global__ \n\
-void saxpy(float a, float *x, float *y, float *out, size_t n) \n\
-{ \n\
- size_t tid = blockIdx.x * blockDim.x + threadIdx.x; \n\
- if (tid < n) { \n\
- out[tid] = ";
-	std::string tmp2 = "; \n\
-} \n\
-} \n";
+	std::string kernelUDF = "struct Node{int x, y, u;int r; Node* westNode;}; \n\
+						extern \"C\" __global__ \n\
+						void saxpy(Node* dnodes, size_t n) \n\
+						{ \n\
+						 size_t tid = blockIdx.x * blockDim.x + threadIdx.x; \n\
+						 Node node = dnodes[tid];\
+						 if (tid < n) { \n\
+						 dnodes[tid].r = ";
 
-	std::string argFinal = tmp1 + toEval + tmp2;
+
+	std::string kernelSetPtrs = "struct Node{int x, y, u;int r; Node* westNode;}; \n\
+						extern \"C\" __global__ \n\
+						void saxpy(Node* dnodes, size_t n) \n\
+						{ \n\
+						 size_t tid = blockIdx.x * blockDim.x + threadIdx.x; \n\
+						 if (tid < n) { \n\
+							if (tid == 0)\
+								dnodes[tid].westNode = &(dnodes[n-1]);\
+							else\
+								dnodes[tid].westNode = &(dnodes[tid-1]);\
+						}\
+						}";
+
+
+	std::string tmp2 = " } }";
+
+	std::string argFinal1 = kernelUDF + toEval + tmp2;
 
 	// Create an instance of nvrtcProgram with the SAXPY code string.
 	nvrtcProgram prog;
 	NVRTC_SAFE_CALL(
 		nvrtcCreateProgram(&prog, // prog
-			argFinal.c_str(), // buffer
+			argFinal1.c_str(), // buffer
 			"saxpy.cu", // name
 			0, // numHeaders
 			NULL, // headers
 			NULL)); // includeNames
+
+	nvrtcProgram prog2;
+	NVRTC_SAFE_CALL(
+		nvrtcCreateProgram(&prog2, // prog
+			kernelSetPtrs.c_str(), // buffer
+			"saxpySetPtrs.cu", // name
+			0, // numHeaders
+			NULL, // headers
+			NULL)); // includeNames
 					// Compile the program for compute_20 with fmad disabled.
+
+
+
 	const char *opts[] = { "--gpu-architecture=compute_20",
-		"--fmad=false" };
+		"--fmad=false", "-default-device" };
+
+	//NVRTC_SAFE_CALL(nvrtcAddNameExpression(prog, "Node"));
 	nvrtcResult compileResult = nvrtcCompileProgram(prog, // prog
 		2, // numOptions
 		opts); // options
+
+	nvrtcResult compileResult2 = nvrtcCompileProgram(prog2, // prog
+		2, // numOptions
+		opts); // options
 			   // Obtain compilation log from the program.
-	size_t logSize;
+	size_t logSize, logSize2;
 	NVRTC_SAFE_CALL(nvrtcGetProgramLogSize(prog, &logSize));
+	NVRTC_SAFE_CALL(nvrtcGetProgramLogSize(prog2, &logSize2));
 	char *log = new char[logSize];
+	char *log2 = new char[logSize2];
 	NVRTC_SAFE_CALL(nvrtcGetProgramLog(prog, log));
-	std::cout << log << '\n';
+	NVRTC_SAFE_CALL(nvrtcGetProgramLog(prog2, log2));
+	std::cout << "compilelog1: " << log << '\n';
+	std::cout << "compilelog2: " << log2 << '\n';
 	delete[] log;
+	delete[] log2;
 	if (compileResult != NVRTC_SUCCESS) {
 		exit(1);
 	}
@@ -110,21 +136,23 @@ void saxpy(float a, float *x, float *y, float *out, size_t n) \n\
 	CUDA_SAFE_CALL(cuModuleGetFunction(&kernel, module, "saxpy"));
 	// Generate input for execution, and create output buffers.
 	size_t n = NUM_THREADS * NUM_BLOCKS;
-	size_t bufferSize = n * sizeof(float);
-	float a = 5.1f;
-	float *hX = new float[n], *hY = new float[n], *hOut = new float[n];
+	size_t bufferSize = n * sizeof(Node);
+	//float a = 5.1f;
+	//float *hX = new float[n], *hY = new float[n], *hOut = new float[n];
+	Node* nodes = new Node[n];
 	for (size_t i = 0; i < n; ++i) {
-		hX[i] = static_cast<float>(i);
-		hY[i] = static_cast<float>(i * 2);
+		nodes[i] = Node(1,4,i*5);
+		if (i == 0)
+			nodes[i].westNode = &(nodes[n-1]);//first element points to last
+		else
+			nodes[i].westNode = &(nodes[i - 1]);
 	}
-	CUdeviceptr dX, dY, dOut;
-	CUDA_SAFE_CALL(cuMemAlloc(&dX, bufferSize));
-	CUDA_SAFE_CALL(cuMemAlloc(&dY, bufferSize));
-	CUDA_SAFE_CALL(cuMemAlloc(&dOut, bufferSize));
-	CUDA_SAFE_CALL(cuMemcpyHtoD(dX, hX, bufferSize));
-	CUDA_SAFE_CALL(cuMemcpyHtoD(dY, hY, bufferSize));
+
+	CUdeviceptr dnodes;
+	CUDA_SAFE_CALL(cuMemAlloc(&dnodes, bufferSize));
+	CUDA_SAFE_CALL(cuMemcpyHtoD(dnodes, nodes, bufferSize));
 	// Execute SAXPY.
-	void *args[] = { &a, &dX, &dY, &dOut, &n };
+	void *args[] = { &dnodes, &n };
 	CUDA_SAFE_CALL(
 		cuLaunchKernel(kernel,
 			NUM_THREADS, 1, 1, // grid dim
@@ -133,18 +161,14 @@ void saxpy(float a, float *x, float *y, float *out, size_t n) \n\
 			args, 0)); // arguments
 	CUDA_SAFE_CALL(cuCtxSynchronize());
 	// Retrieve and print output.
-	CUDA_SAFE_CALL(cuMemcpyDtoH(hOut, dOut, bufferSize));
+	CUDA_SAFE_CALL(cuMemcpyDtoH(nodes, dnodes, bufferSize));
+	std::cout << "expression: " << toEval << std::endl;
 	for (size_t i = 0; i < n; ++i) {
-		std::cout << a << " * " << hX[i] << " + " << hY[i]
-			<< " = " << hOut[i] << '\n';
+		std::cout << "nodes[i].r: " << nodes[i].r << std::endl;
 	}
 	// Release resources.
-	CUDA_SAFE_CALL(cuMemFree(dX));
-	CUDA_SAFE_CALL(cuMemFree(dY));
-	CUDA_SAFE_CALL(cuMemFree(dOut));
+	CUDA_SAFE_CALL(cuMemFree(dnodes));
 	CUDA_SAFE_CALL(cuModuleUnload(module));
 	CUDA_SAFE_CALL(cuCtxDestroy(context));
-	delete[] hX;
-	delete[] hY;
-	delete[] hOut;
+	delete[] nodes;
 }

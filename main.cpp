@@ -1,7 +1,10 @@
-#include <saxpyMod1.h>
+#include <saxpyMod2.h>
 
 int main()
 {
-	runSaxpyMod1("a * x[tid] + y[tid]");
+
+	runSaxpyMod2("node.x + node.y;");
+
+	system("pause");
 	return 0;
 }

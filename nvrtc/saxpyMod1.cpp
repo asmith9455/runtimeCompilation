@@ -63,6 +63,9 @@ void saxpy(float a, float *x, float *y, float *out, size_t n) \n\
 					// Compile the program for compute_20 with fmad disabled.
 	const char *opts[] = { "--gpu-architecture=compute_20",
 		"--fmad=false" };
+
+	
+
 	nvrtcResult compileResult = nvrtcCompileProgram(prog, // prog
 		2, // numOptions
 		opts); // options
