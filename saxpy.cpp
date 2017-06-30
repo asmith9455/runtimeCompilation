@@ -1,6 +1,6 @@
 //example from the user guide: http://docs.nvidia.com/cuda/nvrtc/index.html#example-saxpy
 //visual studio project settings set for CUDA 8.0 libs
-
+#include <saxpy.h>
 #include <nvrtc.h>
 #include <cuda.h>
 #include <iostream>
@@ -35,7 +35,7 @@ void saxpy(float a, float *x, float *y, float *out, size_t n) \n\
  out[tid] = a * x[tid] + y[tid]; \n\
  } \n\
 } \n";
-int main()
+void runSaxpy()
 {
 	// Create an instance of nvrtcProgram with the SAXPY code string.
 	nvrtcProgram prog;
@@ -118,5 +118,4 @@ int main()
 	delete[] hX;
 	delete[] hY;
 	delete[] hOut;
-	return 0;
 }
