@@ -1,7 +1,7 @@
-#include <saxpy.h>
+#include <saxpyMod1.h>
 
 int main()
 {
-	runSaxpy();
+	runSaxpyMod1("a * x[tid] + y[tid]");
 	return 0;
 }
