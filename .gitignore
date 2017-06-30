@@ -3,3 +3,9 @@
 ################################################################################
 
 /x64/Debug
+/.vs/runtimeCompilation/v14
+/runtimeCompilation.VC.VC.opendb
+/runtimeCompilation.VC.db
+/runtimeCompilation.vcxproj.user
+/saxpy.exe
+/saxpy.obj
